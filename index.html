@@ -1,0 +1,1419 @@
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>英文學習小火車</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css"
+      rel="stylesheet"
+    />
+
+    <!-- 配置Tailwind自訂顏色和字體 -->
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: "#3B82F6",
+              secondary: "#10B981",
+              accent: "#F59E0B",
+              danger: "#EF4444",
+              track: "#8B4513",
+              grass: "#4CAF50",
+            },
+            fontFamily: {
+              game: ['"Comic Sans MS"', '"Marker Felt"', "sans-serif"],
+            },
+          },
+        },
+      };
+    </script>
+
+    <style type="text/tailwindcss">
+      @layer utilities {
+        .track-line {
+          background-image: linear-gradient(
+            to right,
+            #8b4513 50%,
+            transparent 50%
+          );
+          background-size: 20px 100%;
+        }
+        .train-shadow {
+          filter: drop-shadow(0 5px 3px rgba(0, 0, 0, 0.3));
+        }
+        .bounce-light {
+          animation: bounce-light 2s infinite;
+        }
+        @keyframes bounce-light {
+          0%,
+          100% {
+            transform: translateY(0);
+          }
+          50% {
+            transform: translateY(-5px);
+          }
+        }
+        .pulse-subtle {
+          animation: pulse-subtle 2s infinite;
+        }
+        @keyframes pulse-subtle {
+          0%,
+          100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0.7;
+          }
+        }
+        .pronunciation-btn {
+          transition: all 0.2s ease;
+        }
+        .pronunciation-btn:hover {
+          transform: scale(1.1);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+        .pronunciation-btn:active {
+          transform: scale(0.95);
+        }
+        .pronunciation-btn.speaking {
+          background-color: rgba(59, 130, 246, 0.3);
+          animation: speaking 1s infinite;
+        }
+        @keyframes speaking {
+          0%,
+          100% {
+            transform: scale(1);
+          }
+          50% {
+            transform: scale(1.05);
+          }
+        }
+        /* 開關樣式 */
+        .toggle-switch {
+          position: relative;
+          display: inline-block;
+          width: 50px;
+          height: 24px;
+        }
+        .toggle-switch input {
+          opacity: 0;
+          width: 0;
+          height: 0;
+        }
+        .toggle-slider {
+          position: absolute;
+          cursor: pointer;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background-color: #ccc;
+          transition: 0.4s;
+          border-radius: 24px;
+        }
+        .toggle-slider:before {
+          position: absolute;
+          content: "";
+          height: 18px;
+          width: 18px;
+          left: 3px;
+          bottom: 3px;
+          background-color: white;
+          transition: 0.4s;
+          border-radius: 50%;
+        }
+        input:checked + .toggle-slider {
+          background-color: #3b82f6;
+        }
+        input:checked + .toggle-slider:before {
+          transform: translateX(26px);
+        }
+      }
+    </style>
+  </head>
+  <body class="bg-blue-50 font-game min-h-screen flex flex-col">
+    <!-- 遊戲頭部 -->
+    <header class="bg-primary text-white shadow-md">
+      <div
+        class="container mx-auto px-4 py-3 flex justify-between items-center"
+      >
+        <div class="flex items-center space-x-2">
+          <i class="fa fa-train text-2xl bounce-light"></i>
+          <h1 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold">
+            英文學習小火車
+          </h1>
+        </div>
+        <div class="flex items-center space-x-6">
+          <div class="hidden md:flex items-center">
+            <i class="fa fa-star text-yellow-300 mr-2"></i>
+            <span class="text-xl" id="score">分數: 0</span>
+          </div>
+          <div class="hidden md:flex items-center">
+            <i class="fa fa-clock-o text-yellow-300 mr-2"></i>
+            <span class="text-xl" id="time">時間: 00:00</span>
+          </div>
+          <div class="hidden md:flex items-center">
+            <i class="fa fa-map-signs text-green-200 mr-2"></i>
+            <span class="text-xl" id="level"
+              >关卡: 1/<span id="total-levels">3</span></span
+            >
+          </div>
+          <button
+            id="sound-toggle"
+            class="p-2 rounded-full hover:bg-primary-700 transition-colors"
+          >
+            <i class="fa fa-volume-up text-xl"></i>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- 行動端狀態顯示 -->
+    <div
+      class="md:hidden bg-primary-100 px-4 py-2 flex justify-between flex-wrap gap-2"
+    >
+      <div class="flex items-center">
+        <i class="fa fa-star text-yellow-500 mr-1"></i>
+        <span id="score-mobile">分數: 0</span>
+      </div>
+      <div class="flex items-center">
+        <i class="fa fa-clock-o text-yellow-500 mr-1"></i>
+        <span id="time-mobile">時間: 00:00</span>
+      </div>
+      <div class="flex items-center">
+        <i class="fa fa-map-signs text-green-600 mr-1"></i>
+        <span id="level-mobile"
+          >关卡: 1/<span id="total-levels-mobile">3</span></span
+        >
+      </div>
+    </div>
+
+    <!-- 遊戲主區域 -->
+    <main
+      class="flex-grow container mx-auto px-4 py-6 flex flex-col items-center justify-between"
+    >
+      <!-- 遊戲開始介面 -->
+      <div id="start-screen" class="text-center py-10 w-full max-w-lg">
+        <div class="w-40 h-40 mx-auto mb-6">
+          <img
+            src="images/2509240001.jpeg"
+            alt="卡通小火车图片"
+            class="w-full h-full object-contain"
+          />
+        </div>
+        <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-primary mb-4">
+          歡迎來到英文學習小火車!
+        </h2>
+        <p class="text-gray-700 text-lg mb-8">
+          幫助小火車沿著軌道前進，每到一個車站回答一個英文單字問題，答對了才能繼續旅行哦！
+          點擊喇叭圖示可以聽單字發音。
+        </p>
+
+        <!-- 關卡設定 -->
+        <div class="bg-white rounded-lg shadow-md p-5 mb-8">
+          <h3 class="text-xl font-bold text-primary mb-3">遊戲設定</h3>
+          <div class="flex flex-col items-center space-y-6">
+            <div class="w-full">
+              <label for="level-count" class="text-gray-700 mb-2 block"
+                >選擇關卡數量:</label
+              >
+              <select
+                id="level-count"
+                class="border-2 border-gray-300 rounded-lg px-4 py-2 w-full max-w-xs text-center focus:outline-none focus:ring-2 focus:ring-primary/50"
+              >
+                <option value="1">1 關</option>
+                <option value="2">2 關</option>
+                <option value="3" selected="">3 關</option>
+                <option value="4">4 關</option>
+                <option value="5">5 關</option>
+              </select>
+            </div>
+
+            <!-- 新增自動發音設定 -->
+            <div class="w-full flex items-center justify-between">
+              <label for="auto-pronunciation" class="text-gray-700"
+                >自動播放單字發音:</label
+              >
+              <label class="toggle-switch">
+                <input type="checkbox" id="auto-pronunciation" checked="" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <button
+          id="start-button"
+          class="bg-accent hover:bg-amber-600 text-white font-bold py-3 px-8 rounded-full text-lg shadow-lg transform transition hover:scale-105 focus:outline-none focus:ring-4 focus:ring-amber-300"
+        >
+          開始遊戲 <i class="fa fa-play ml-2"></i>
+        </button>
+      </div>
+
+      <!-- 遊戲區域 (預設隱藏) -->
+      <div id="game-screen" class="w-full hidden">
+        <!-- 遊戲資訊 -->
+        <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+          <div class="flex flex-wrap justify-between items-center gap-3">
+            <div class="flex items-center gap-3">
+              <div>
+                <h3 class="text-xl font-bold text-primary">當前任務</h3>
+                <p id="question" class="text-lg text-gray-700">
+                  找出與圖片相符的單字
+                </p>
+              </div>
+              <!-- 發音按鈕 -->
+              <button
+                id="pronunciation-button"
+                class="pronunciation-btn bg-primary/10 hover:bg-primary/20 text-primary p-2 rounded-full transition-colors"
+              >
+                <i class="fa fa-volume-up text-xl"></i>
+              </button>
+            </div>
+            <div class="flex space-x-2">
+              <button
+                id="pause-button"
+                class="bg-gray-200 hover:bg-gray-300 p-2 rounded-full transition-colors"
+              >
+                <i class="fa fa-pause text-gray-700"></i>
+              </button>
+              <button
+                id="restart-button"
+                class="bg-gray-200 hover:bg-gray-300 p-2 rounded-full transition-colors"
+              >
+                <i class="fa fa-refresh text-gray-700"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 图片提示区域 -->
+        <div class="bg-white rounded-lg shadow-md p-4 mb-6 flex justify-center">
+          <div class="w-full max-w-md h-48 flex items-center justify-center">
+            <img
+              id="word-image"
+              src="images/apple.png"
+              alt="單字對應的圖片"
+              class="max-h-full max-w-full object-contain rounded-lg"
+            />
+          </div>
+        </div>
+
+        <!-- 答案選項 -->
+        <div id="answers" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+          <!-- 答案選項將透過JS動態生成 -->
+        </div>
+
+        <!-- 火车轨道区域 -->
+        <div class="w-full relative mt-auto">
+          <!-- 草地背景 -->
+          <div class="h-24 bg-grass rounded-t-3xl overflow-hidden">
+            <!-- 轨道 -->
+            <div class="w-full h-12 relative top-6">
+              <div
+                class="absolute left-0 right-0 h-8 bg-track rounded-md mx-4"
+              ></div>
+              <div class="absolute left-0 right-0 h-2 track-line top-3"></div>
+            </div>
+
+            <!-- 火车站点 -->
+            <div
+              class="station absolute w-16 h-16 bg-red-500 rounded-full flex items-center justify-center text-white text-sm font-bold"
+              style="left: 20%; top: -8px"
+            >
+              1
+            </div>
+            <div
+              class="station absolute w-16 h-16 bg-red-500 rounded-full flex items-center justify-center text-white text-sm font-bold"
+              style="left: 40%; top: -8px"
+            >
+              2
+            </div>
+            <div
+              class="station absolute w-16 h-16 bg-red-500 rounded-full flex items-center justify-center text-white text-sm font-bold"
+              style="left: 60%; top: -8px"
+            >
+              3
+            </div>
+            <div
+              class="station absolute w-16 h-16 bg-red-500 rounded-full flex items-center justify-center text-white text-sm font-bold"
+              style="left: 80%; top: -8px"
+            >
+              4
+            </div>
+
+            <!-- 小火车 -->
+            <div
+              id="train"
+              class="absolute bottom-0 left-0 w-24 train-shadow transition-all duration-1000 ease-linear"
+            >
+              <img
+                src="images/2509240002.png"
+                alt="小火车"
+                class="w-full h-auto"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 暫停介面 (預設隱藏) -->
+      <div
+        id="pause-screen"
+        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-10"
+      >
+        <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4 text-center">
+          <h2 class="text-2xl font-bold text-primary mb-6">遊戲暫停</h2>
+          <div class="space-y-4 mb-6">
+            <p class="text-gray-600">
+              <span class="font-bold">當前分數:</span>
+              <span id="pause-score">0</span>
+            </p>
+            <p class="text-gray-600">
+              <span class="font-bold">當前時間:</span>
+              <span id="pause-time">00:00</span>
+            </p>
+            <p class="text-gray-600">
+              <span class="font-bold">當前關卡:</span>
+              <span id="pause-level">1</span>/<span id="pause-total-levels"
+                >3</span
+              >
+            </p>
+          </div>
+          <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <button
+              id="resume-button"
+              class="bg-primary hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-full transition-colors"
+            >
+              繼續遊戲 <i class="fa fa-play ml-1"></i>
+            </button>
+            <button
+              id="quit-button"
+              class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-6 rounded-full transition-colors"
+            >
+              退出遊戲 <i class="fa fa-sign-out ml-1"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 正確回饋 (預設隱藏) -->
+      <div
+        id="correct-feedback"
+        class="fixed top-1/4 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-8 py-4 rounded-lg shadow-xl hidden z-10"
+      >
+        <div class="text-center">
+          <i class="fa fa-check-circle text-4xl mb-2"></i>
+          <p class="text-xl font-bold">正確!</p>
+        </div>
+      </div>
+
+      <!-- 錯誤回饋 (預設隱藏) -->
+      <div
+        id="wrong-feedback"
+        class="fixed top-1/4 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-8 py-4 rounded-lg shadow-xl hidden z-10"
+      >
+        <div class="text-center">
+          <i class="fa fa-times-circle text-4xl mb-2"></i>
+          <p class="text-xl font-bold">不正確</p>
+          <p class="mt-2">
+            正確答案是: <span id="correct-answer" class="font-bold"></span>
+          </p>
+        </div>
+      </div>
+
+      <!-- 瀏覽器不支援語音合成提示 (預設隱藏) -->
+      <div
+        id="speech-support-warning"
+        class="fixed top-1/4 left-1/2 transform -translate-x-1/2 bg-amber-500 text-white px-8 py-4 rounded-lg shadow-xl hidden z-10"
+      >
+        <div class="text-center">
+          <i class="fa fa-exclamation-triangle text-4xl mb-2"></i>
+          <p class="text-xl font-bold">語音功能不支援</p>
+          <p class="mt-2">您的瀏覽器不支援語音合成功能</p>
+        </div>
+      </div>
+
+      <!-- 關卡完成 (預設隱藏) -->
+      <div
+        id="level-complete"
+        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-10"
+      >
+        <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4 text-center">
+          <div class="text-yellow-500 text-5xl mb-4">
+            <i class="fa fa-trophy"></i>
+          </div>
+          <h2 class="text-2xl font-bold text-primary mb-2">關卡完成!</h2>
+          <p class="text-gray-600 mb-6">
+            恭喜你完成了第 <span id="completed-level">1</span> 關
+          </p>
+          <p class="text-gray-700 mb-2">
+            <span class="font-bold">當前分數:</span>
+            <span id="level-score">100</span>
+          </p>
+          <p class="text-gray-700 mb-6">
+            <span class="font-bold">關卡用時:</span>
+            <span id="level-time">00:30</span>
+          </p>
+          <button
+            id="next-level"
+            class="bg-accent hover:bg-amber-600 text-white font-bold py-3 px-8 rounded-full text-lg shadow-lg transform transition hover:scale-105 focus:outline-none"
+          >
+            下一關 <i class="fa fa-arrow-right ml-1"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- 全部完成 (預設隱藏) -->
+      <div
+        id="all-complete"
+        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-10"
+      >
+        <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4 text-center">
+          <div class="text-yellow-500 text-6xl mb-4 pulse-subtle">
+            <i class="fa fa-trophy"></i>
+          </div>
+          <h2 class="text-3xl font-bold text-primary mb-4">全部完成!</h2>
+          <p class="text-gray-600 mb-6">恭喜你完成了所有關卡，太棒了！</p>
+          <div class="space-y-3 mb-8">
+            <p class="text-gray-700">
+              <span class="font-bold">總得分:</span>
+              <span id="final-score" class="text-green-600 text-xl">300</span>
+            </p>
+            <p class="text-gray-700">
+              <span class="font-bold">總用時:</span>
+              <span id="total-time" class="text-blue-600 text-xl">02:15</span>
+            </p>
+            <p class="text-gray-700">
+              <span class="font-bold">完成關卡:</span>
+              <span id="total-completed-levels" class="text-purple-600 text-xl"
+                >3</span
+              >
+              關
+            </p>
+          </div>
+          <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <button
+              id="play-again-button"
+              class="bg-accent hover:bg-amber-600 text-white font-bold py-3 px-8 rounded-full text-lg shadow-lg transform transition hover:scale-105 focus:outline-none"
+            >
+              再玩一次 <i class="fa fa-refresh ml-1"></i>
+            </button>
+            <button
+              id="back-to-menu-button"
+              class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-3 px-8 rounded-full text-lg shadow-lg transform transition hover:scale-105 focus:outline-none"
+            >
+              返回選單 <i class="fa fa-home ml-1"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- 遊戲底部 -->
+    <footer class="bg-gray-800 text-white py-4">
+      <div class="container mx-auto px-4 text-center">
+        <p>英文學習小火車 © 2023 - 讓學習英語變得更有趣</p>
+      </div>
+    </footer>
+
+    <script>
+      // 遊戲資料 - 英語單字庫
+      const wordBank = [
+        // 第一級 - 簡單詞彙
+        [
+          {
+            word: "apple",
+            chinese: "蘋果",
+            image: "images/apple.png",
+          },
+          {
+            word: "banana",
+            chinese: "香蕉",
+            image: "images/banana.png",
+          },
+          {
+            word: "cat",
+            chinese: "猫",
+            image: "images/cat.png",
+          },
+          {
+            word: "dog",
+            chinese: "狗",
+            image: "images/dog.png",
+          },
+        ],
+        // 第二級 - 稍難詞彙
+        [
+          {
+            word: "elephant",
+            chinese: "大象",
+            image: "images/elephant.png",
+          },
+          {
+            word: "giraffe",
+            chinese: "長頸鹿",
+            image: "images/giraffe.png",
+          },
+          {
+            word: "hamburger",
+            chinese: "漢堡",
+            image: "images/hamburger.png",
+          },
+          {
+            word: "ice cream",
+            chinese: "冰淇淋",
+            image: "images/ice_cream.png",
+          },
+        ],
+        // 第三級 - 更難詞彙
+        [
+          {
+            word: "jungle",
+            chinese: "叢林",
+            image: "images/jungle.png",
+          },
+          {
+            word: "kangaroo",
+            chinese: "袋鼠",
+            image: "images/kangaroo.png",
+          },
+          {
+            word: "lion",
+            chinese: "獅子",
+            image: "images/lion.png",
+          },
+          {
+            word: "monkey",
+            chinese: "猴子",
+            image: "images/monkey.png",
+          },
+        ],
+        // 第四級 - 進階詞彙
+        [
+          {
+            word: "ocean",
+            chinese: "海洋",
+            image: "images/ocean.png",
+          },
+          {
+            word: "piano",
+            chinese: "鋼琴",
+            image: "images/piano.png",
+          },
+          {
+            word: "rainbow",
+            chinese: "彩虹",
+            image: "images/rainbow.png",
+          },
+          {
+            word: "star",
+            chinese: "星星",
+            image: "images/star.png",
+          },
+        ],
+        // 第五級 - 高級詞彙
+        [
+          {
+            word: "tiger",
+            chinese: "老虎",
+            image: "images/tiger.png",
+          },
+          {
+            word: "umbrella",
+            chinese: "雨傘",
+            image: "images/umbrella.png",
+          },
+          {
+            word: "volcano",
+            chinese: "火山",
+            image: "images/volcano.png",
+          },
+          {
+            word: "waterfall",
+            chinese: "瀑布",
+            image: "images/waterfall.png",
+          },
+        ],
+      ];
+
+      // 遊戲狀態
+      const gameState = {
+        score: 0,
+        level: 1,
+        totalLevels: 3,
+        currentWordIndex: 0,
+        currentWord: "", // 當前單字，用於發音
+        isPlaying: false,
+        isPaused: false,
+        soundEnabled: true,
+        autoPronunciation: true, // 新增：自動發音開關狀態
+        startTime: 0,
+        elapsedTime: 0,
+        timerInterval: null,
+        levelStartTime: 0,
+        isSpeaking: false, // 用於追蹤是否正在發音
+        autoPronunciationTimeout: null, // 用於儲存自動發音的延遲計時器
+      };
+
+      // DOM 元素
+      const elements = {
+        // 新增自動發音開關元素
+        autoPronunciationToggle: document.getElementById("auto-pronunciation"),
+
+        // 發音按鈕元素
+        pronunciationButton: document.getElementById("pronunciation-button"),
+        speechSupportWarning: document.getElementById("speech-support-warning"),
+
+        // 螢幕元素
+        startScreen: document.getElementById("start-screen"),
+        gameScreen: document.getElementById("game-screen"),
+        pauseScreen: document.getElementById("pause-screen"),
+        correctFeedback: document.getElementById("correct-feedback"),
+        wrongFeedback: document.getElementById("wrong-feedback"),
+        levelComplete: document.getElementById("level-complete"),
+        allComplete: document.getElementById("all-complete"),
+
+        // 按鈕元素
+        startButton: document.getElementById("start-button"),
+        pauseButton: document.getElementById("pause-button"),
+        resumeButton: document.getElementById("resume-button"),
+        restartButton: document.getElementById("restart-button"),
+        quitButton: document.getElementById("quit-button"),
+        nextLevelButton: document.getElementById("next-level"),
+        playAgainButton: document.getElementById("play-again-button"),
+        backToMenuButton: document.getElementById("back-to-menu-button"),
+        soundToggle: document.getElementById("sound-toggle"),
+        levelCountSelect: document.getElementById("level-count"),
+
+        // 顯示元素
+        scoreDisplay: document.getElementById("score"),
+        scoreMobileDisplay: document.getElementById("score-mobile"),
+        timeDisplay: document.getElementById("time"),
+        timeMobileDisplay: document.getElementById("time-mobile"),
+        levelDisplay: document.getElementById("level"),
+        totalLevelsDisplay: document.getElementById("total-levels"),
+        levelMobileDisplay: document.getElementById("level-mobile"),
+        totalLevelsMobileDisplay: document.getElementById(
+          "total-levels-mobile"
+        ),
+
+        // 暫停介面顯示
+        pauseScoreDisplay: document.getElementById("pause-score"),
+        pauseTimeDisplay: document.getElementById("pause-time"),
+        pauseLevelDisplay: document.getElementById("pause-level"),
+        pauseTotalLevelsDisplay: document.getElementById("pause-total-levels"),
+
+        // 關卡完成顯示
+        completedLevelDisplay: document.getElementById("completed-level"),
+        levelScoreDisplay: document.getElementById("level-score"),
+        levelTimeDisplay: document.getElementById("level-time"),
+
+        // 全部完成顯示
+        finalScoreDisplay: document.getElementById("final-score"),
+        totalTimeDisplay: document.getElementById("total-time"),
+        totalCompletedLevelsDisplay: document.getElementById(
+          "total-completed-levels"
+        ),
+
+        // 遊戲內容元素
+        correctAnswerDisplay: document.getElementById("correct-answer"),
+        questionDisplay: document.getElementById("question"),
+        wordImage: document.getElementById("word-image"),
+        answersContainer: document.getElementById("answers"),
+        train: document.getElementById("train"),
+      };
+
+      // 檢查瀏覽器是否支援語音合成
+      function checkSpeechSupport() {
+        return "speechSynthesis" in window;
+      }
+
+      // 使用瀏覽器語音合成API播放單字發音
+      function speakWord(word) {
+        // 檢查聲音是否開啟
+        if (!gameState.soundEnabled) return;
+
+        // 檢查瀏覽器是否支援語音合成
+        if (!checkSpeechSupport()) {
+          showSpeechSupportWarning();
+          return;
+        }
+
+        // 如果正在發音，則先停止
+        if (gameState.isSpeaking) {
+          window.speechSynthesis.cancel();
+        }
+
+        try {
+          // 建立語音合成實例
+          const utterance = new SpeechSynthesisUtterance(word);
+          // 設定語音屬性
+          utterance.lang = "en-US"; // 使用美式英語發音
+          utterance.volume = 1; // 音量 (0-1)
+          utterance.rate = 0.9; // 語速 (0.1-10)
+          utterance.pitch = 1; // 音調 (0-2)
+
+          // 標記為正在發音
+          gameState.isSpeaking = true;
+          elements.pronunciationButton.classList.add("speaking");
+
+          // 發音結束時的回呼
+          utterance.onend = function () {
+            gameState.isSpeaking = false;
+            elements.pronunciationButton.classList.remove("speaking");
+          };
+
+          // 發音出錯時的回呼
+          utterance.onerror = function () {
+            gameState.isSpeaking = false;
+            elements.pronunciationButton.classList.remove("speaking");
+            console.error("語音合成出錯");
+          };
+
+          // 播放發音
+          window.speechSynthesis.speak(utterance);
+        } catch (error) {
+          gameState.isSpeaking = false;
+          elements.pronunciationButton.classList.remove("speaking");
+          console.error("語音合成失敗:", error);
+          showSpeechSupportWarning();
+        }
+      }
+
+      // 顯示瀏覽器不支援語音合成的提示
+      function showSpeechSupportWarning() {
+        elements.speechSupportWarning.classList.remove("hidden");
+
+        setTimeout(() => {
+          elements.speechSupportWarning.classList.add("hidden");
+        }, 3000);
+      }
+
+      // 初始化遊戲
+      function initGame() {
+        // 獲取使用者選擇的關卡數量和自動發音設定
+        gameState.totalLevels = parseInt(elements.levelCountSelect.value);
+        gameState.autoPronunciation = elements.autoPronunciationToggle.checked;
+
+        // 重設遊戲狀態
+        gameState.score = 0;
+        gameState.level = 1;
+        gameState.currentWordIndex = 0;
+        gameState.currentWord = "";
+        gameState.isPlaying = true;
+        gameState.isPaused = false;
+        gameState.elapsedTime = 0;
+        gameState.isSpeaking = false;
+
+        // 清除可能存在的自動發音計時器
+        if (gameState.autoPronunciationTimeout) {
+          clearTimeout(gameState.autoPronunciationTimeout);
+          gameState.autoPronunciationTimeout = null;
+        }
+
+        // 開始計時
+        startTimer();
+
+        // 更新顯示
+        updateScore();
+        updateLevel();
+        updateTime();
+        loadCurrentWord();
+
+        // 移動火車到起點
+        moveTrain(0);
+      }
+
+      // 開始計時器
+      function startTimer() {
+        // 記錄遊戲開始時間
+        gameState.startTime = Date.now() - gameState.elapsedTime;
+        gameState.levelStartTime = Date.now();
+
+        // 清除之前的計時器
+        if (gameState.timerInterval) {
+          clearInterval(gameState.timerInterval);
+        }
+
+        // 設定新計時器
+        gameState.timerInterval = setInterval(() => {
+          if (!gameState.isPaused) {
+            gameState.elapsedTime = Date.now() - gameState.startTime;
+            updateTime();
+          }
+        }, 1000);
+      }
+
+      // 格式化時間（毫秒 -> MM:SS）
+      function formatTime(milliseconds) {
+        const totalSeconds = Math.floor(milliseconds / 1000);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return `${minutes.toString().padStart(2, "0")}:${seconds
+          .toString()
+          .padStart(2, "0")}`;
+      }
+
+      // 更新時間顯示
+      function updateTime() {
+        const formattedTime = formatTime(gameState.elapsedTime);
+        elements.timeDisplay.textContent = `時間: ${formattedTime}`;
+        elements.timeMobileDisplay.textContent = `時間: ${formattedTime}`;
+        elements.pauseTimeDisplay.textContent = formattedTime;
+      }
+
+      // 載入當前單字問題
+      function loadCurrentWord() {
+        // 清除可能存在的自動發音計時器
+        if (gameState.autoPronunciationTimeout) {
+          clearTimeout(gameState.autoPronunciationTimeout);
+          gameState.autoPronunciationTimeout = null;
+        }
+
+        const currentLevelWords = wordBank[gameState.level - 1];
+        const currentWord = currentLevelWords[gameState.currentWordIndex];
+
+        // 儲存當前單字用於發音
+        gameState.currentWord = currentWord.word;
+
+        // 更新圖片
+        elements.wordImage.src = currentWord.image;
+        elements.wordImage.alt = currentWord.chinese;
+
+        // 更新問題
+        elements.questionDisplay.textContent = `找出"${currentWord.chinese}"對應的英文單字`;
+
+        // 產生答案選項
+        generateAnswerOptions(currentWord);
+
+        // 如果開啟了自動發音，延遲500毫秒播放
+        if (gameState.autoPronunciation && gameState.soundEnabled) {
+          gameState.autoPronunciationTimeout = setTimeout(() => {
+            // 確保遊戲沒有被暫停且單字仍然是當前單字
+            if (
+              !gameState.isPaused &&
+              gameState.currentWord === currentWord.word
+            ) {
+              speakWord(currentWord.word);
+            }
+          }, 500);
+        }
+      }
+
+      // 產生答案選項
+      function generateAnswerOptions(correctWord) {
+        // 清空現有選項
+        elements.answersContainer.innerHTML = "";
+
+        // 收集所有可能的干擾項
+        const allWords = [];
+        wordBank.forEach((level) => {
+          level.forEach((word) => {
+            allWords.push(word.word);
+          });
+        });
+
+        // 過濾出不是正確答案的單字
+        const otherWords = allWords.filter((word) => word !== correctWord.word);
+
+        // 隨機選擇3個干擾項
+        const distractors = [];
+        while (distractors.length < 3) {
+          const randomIndex = Math.floor(Math.random() * otherWords.length);
+          const randomWord = otherWords[randomIndex];
+          if (!distractors.includes(randomWord)) {
+            distractors.push(randomWord);
+          }
+        }
+
+        // 合併正確答案和干擾項，並打亂順序
+        const options = [correctWord.word, ...distractors];
+        shuffleArray(options);
+
+        // 建立選項按鈕
+        options.forEach((option) => {
+          const button = document.createElement("button");
+          button.className =
+            "bg-white border-2 border-gray-300 hover:border-primary hover:bg-blue-50 text-gray-800 text-lg py-3 px-4 rounded-lg shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/50";
+          button.textContent = option;
+          button.addEventListener("click", () =>
+            checkAnswer(option, correctWord.word)
+          );
+          elements.answersContainer.appendChild(button);
+        });
+      }
+
+      // 檢查答案
+      function checkAnswer(selectedAnswer, correctAnswer) {
+        // 如果正在發音，先停止
+        if (gameState.isSpeaking) {
+          window.speechSynthesis.cancel();
+          gameState.isSpeaking = false;
+          elements.pronunciationButton.classList.remove("speaking");
+        }
+
+        // 清除自動發音計時器
+        if (gameState.autoPronunciationTimeout) {
+          clearTimeout(gameState.autoPronunciationTimeout);
+          gameState.autoPronunciationTimeout = null;
+        }
+
+        if (selectedAnswer === correctAnswer) {
+          // 答案正確
+          showCorrectFeedback();
+          gameState.score += 10;
+          updateScore();
+
+          // 移動到下一個單字
+          gameState.currentWordIndex++;
+
+          // 計算火車應該移動到的位置
+          const trainPosition =
+            (gameState.currentWordIndex /
+              wordBank[gameState.level - 1].length) *
+            100;
+
+          // 移動火車
+          moveTrain(trainPosition);
+
+          // 檢查是否完成當前關卡
+          if (
+            gameState.currentWordIndex >= wordBank[gameState.level - 1].length
+          ) {
+            setTimeout(showLevelComplete, 1000);
+          } else {
+            // 載入下一個單字
+            setTimeout(loadCurrentWord, 1000);
+          }
+        } else {
+          // 答案錯誤
+          showWrongFeedback(correctAnswer);
+          // 錯誤不扣分，需要重新回答
+          setTimeout(loadCurrentWord, 2000);
+        }
+      }
+
+      // 移動火車
+      function moveTrain(percentage) {
+        // 火車最大移動到85%的位置，留出空間
+        const maxPosition = 85;
+        const position = Math.min(percentage, maxPosition);
+        elements.train.style.left = `${position}%`;
+      }
+
+      // 顯示正確回饋
+      function showCorrectFeedback() {
+        elements.correctFeedback.classList.remove("hidden");
+        playSound("correct");
+
+        setTimeout(() => {
+          elements.correctFeedback.classList.add("hidden");
+        }, 1000);
+      }
+
+      // 顯示錯誤回饋
+      function showWrongFeedback(correctAnswer) {
+        elements.correctAnswerDisplay.textContent = correctAnswer;
+        elements.wrongFeedback.classList.remove("hidden");
+        playSound("wrong");
+
+        setTimeout(() => {
+          elements.wrongFeedback.classList.add("hidden");
+        }, 2000);
+      }
+
+      // 顯示關卡完成
+      function showLevelComplete() {
+        // 暫停計時器
+        clearInterval(gameState.timerInterval);
+
+        // 如果正在發音，先停止
+        if (gameState.isSpeaking) {
+          window.speechSynthesis.cancel();
+          gameState.isSpeaking = false;
+          elements.pronunciationButton.classList.remove("speaking");
+        }
+
+        // 清除自動發音計時器
+        if (gameState.autoPronunciationTimeout) {
+          clearTimeout(gameState.autoPronunciationTimeout);
+          gameState.autoPronunciationTimeout = null;
+        }
+
+        // 計算關卡用時
+        const levelTime = Date.now() - gameState.levelStartTime;
+
+        // 更新關卡完成介面
+        elements.completedLevelDisplay.textContent = gameState.level;
+        elements.levelScoreDisplay.textContent = gameState.score;
+        elements.levelTimeDisplay.textContent = formatTime(levelTime);
+        elements.levelComplete.classList.remove("hidden");
+
+        playSound("complete");
+      }
+
+      // 進入下一關
+      function nextLevel() {
+        elements.levelComplete.classList.add("hidden");
+
+        // 檢查是否有下一關
+        if (gameState.level < gameState.totalLevels) {
+          gameState.level++;
+          gameState.currentWordIndex = 0;
+          gameState.levelStartTime = Date.now();
+
+          // 重新開始計時器
+          startTimer();
+
+          // 更新顯示並載入新關卡
+          updateLevel();
+          loadCurrentWord();
+          moveTrain(0);
+        } else {
+          // 所有關卡完成
+          showAllComplete();
+        }
+      }
+
+      // 顯示所有關卡完成
+      function showAllComplete() {
+        // 清除計時器
+        clearInterval(gameState.timerInterval);
+
+        // 更新最終統計資訊
+        elements.finalScoreDisplay.textContent = gameState.score;
+        elements.totalTimeDisplay.textContent = formatTime(
+          gameState.elapsedTime
+        );
+        elements.totalCompletedLevelsDisplay.textContent =
+          gameState.totalLevels;
+
+        // 顯示全部完成介面
+        elements.allComplete.classList.remove("hidden");
+        playSound("victory");
+      }
+
+      // 更新分數顯示
+      function updateScore() {
+        elements.scoreDisplay.textContent = `分數: ${gameState.score}`;
+        elements.scoreMobileDisplay.textContent = `分數: ${gameState.score}`;
+        elements.pauseScoreDisplay.textContent = gameState.score;
+      }
+
+      // 更新關卡顯示
+      function updateLevel() {
+        elements.levelDisplay.textContent = gameState.level;
+        elements.totalLevelsDisplay.textContent = gameState.totalLevels;
+        elements.levelMobileDisplay.textContent = gameState.level;
+        elements.totalLevelsMobileDisplay.textContent = gameState.totalLevels;
+        elements.pauseLevelDisplay.textContent = gameState.level;
+        elements.pauseTotalLevelsDisplay.textContent = gameState.totalLevels;
+      }
+
+      // 暫停遊戲
+      function pauseGame() {
+        if (gameState.isPlaying && !gameState.isPaused) {
+          // 如果正在發音，先暫停
+          if (gameState.isSpeaking) {
+            window.speechSynthesis.pause();
+          }
+
+          // 清除自動發音計時器
+          if (gameState.autoPronunciationTimeout) {
+            clearTimeout(gameState.autoPronunciationTimeout);
+            gameState.autoPronunciationTimeout = null;
+          }
+
+          gameState.isPaused = true;
+          clearInterval(gameState.timerInterval);
+          elements.pauseScreen.classList.remove("hidden");
+        }
+      }
+
+      // 恢復遊戲
+      function resumeGame() {
+        if (gameState.isPlaying && gameState.isPaused) {
+          // 如果之前在發音，恢復發音
+          if (gameState.isSpeaking) {
+            window.speechSynthesis.resume();
+          } else if (gameState.autoPronunciation && gameState.soundEnabled) {
+            // 如果開啟了自動發音且不在發音中，重新觸發當前單字發音
+            speakWord(gameState.currentWord);
+          }
+
+          gameState.isPaused = false;
+          elements.pauseScreen.classList.add("hidden");
+          startTimer();
+        }
+      }
+
+      // 重新開始遊戲
+      function restartGame() {
+        // 清除計時器
+        clearInterval(gameState.timerInterval);
+
+        // 如果正在發音，先停止
+        if (gameState.isSpeaking) {
+          window.speechSynthesis.cancel();
+          gameState.isSpeaking = false;
+          elements.pronunciationButton.classList.remove("speaking");
+        }
+
+        // 清除自動發音計時器
+        if (gameState.autoPronunciationTimeout) {
+          clearTimeout(gameState.autoPronunciationTimeout);
+          gameState.autoPronunciationTimeout = null;
+        }
+
+        // 隱藏所有彈窗
+        elements.pauseScreen.classList.add("hidden");
+        elements.levelComplete.classList.add("hidden");
+        elements.allComplete.classList.add("hidden");
+        elements.speechSupportWarning.classList.add("hidden");
+
+        // 重新初始化遊戲
+        initGame();
+      }
+
+      // 返回主選單
+      function backToMenu() {
+        // 清除計時器
+        clearInterval(gameState.timerInterval);
+
+        // 如果正在發音，先停止
+        if (gameState.isSpeaking) {
+          window.speechSynthesis.cancel();
+          gameState.isSpeaking = false;
+          elements.pronunciationButton.classList.remove("speaking");
+        }
+
+        // 清除自動發音計時器
+        if (gameState.autoPronunciationTimeout) {
+          clearTimeout(gameState.autoPronunciationTimeout);
+          gameState.autoPronunciationTimeout = null;
+        }
+
+        // 隱藏遊戲介面和彈窗
+        elements.gameScreen.classList.add("hidden");
+        elements.pauseScreen.classList.add("hidden");
+        elements.levelComplete.classList.add("hidden");
+        elements.allComplete.classList.add("hidden");
+        elements.speechSupportWarning.classList.add("hidden");
+
+        // 顯示開始介面
+        elements.startScreen.classList.remove("hidden");
+
+        gameState.isPlaying = false;
+      }
+
+      // 切換聲音
+      function toggleSound() {
+        gameState.soundEnabled = !gameState.soundEnabled;
+        const icon = elements.soundToggle.querySelector("i");
+
+        // 如果關閉聲音且正在發音，停止發音
+        if (!gameState.soundEnabled) {
+          if (gameState.isSpeaking) {
+            window.speechSynthesis.cancel();
+            gameState.isSpeaking = false;
+            elements.pronunciationButton.classList.remove("speaking");
+          }
+
+          // 清除自動發音計時器
+          if (gameState.autoPronunciationTimeout) {
+            clearTimeout(gameState.autoPronunciationTimeout);
+            gameState.autoPronunciationTimeout = null;
+          }
+        } else if (gameState.autoPronunciation && !gameState.isPaused) {
+          // 如果開啟聲音且開啟了自動發音，播放當前單字
+          speakWord(gameState.currentWord);
+        }
+
+        if (gameState.soundEnabled) {
+          icon.classList.remove("fa-volume-off");
+          icon.classList.add("fa-volume-up");
+        } else {
+          icon.classList.remove("fa-volume-up");
+          icon.classList.add("fa-volume-off");
+        }
+      }
+
+      // 切換自動發音設定
+      function toggleAutoPronunciation() {
+        gameState.autoPronunciation = elements.autoPronunciationToggle.checked;
+
+        // 如果開啟了自動發音且遊戲正在進行中，立即播放當前單字
+        if (
+          gameState.autoPronunciation &&
+          gameState.isPlaying &&
+          !gameState.isPaused &&
+          gameState.soundEnabled &&
+          !gameState.isSpeaking
+        ) {
+          speakWord(gameState.currentWord);
+        }
+      }
+
+      // 播放遊戲音效 (簡單模擬)
+      function playSound(type) {
+        if (!gameState.soundEnabled) return;
+
+        // 使用Web Audio API建立簡單音效
+        try {
+          const audioContext = new (window.AudioContext ||
+            window.webkitAudioContext)();
+          const oscillator = audioContext.createOscillator();
+          const gainNode = audioContext.createGain();
+
+          oscillator.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+
+          // 根據不同類型設定不同音效
+          switch (type) {
+            case "correct":
+              oscillator.type = "sine";
+              oscillator.frequency.setValueAtTime(
+                523.25,
+                audioContext.currentTime
+              ); // C5
+              gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+              oscillator.start();
+              oscillator.stop(audioContext.currentTime + 0.3);
+              break;
+            case "wrong":
+              oscillator.type = "sine";
+              oscillator.frequency.setValueAtTime(
+                261.63,
+                audioContext.currentTime
+              ); // C4
+              gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+              oscillator.start();
+              oscillator.stop(audioContext.currentTime + 0.5);
+              break;
+            case "complete":
+              oscillator.type = "sine";
+              oscillator.frequency.setValueAtTime(
+                659.25,
+                audioContext.currentTime
+              ); // E5
+              gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+              oscillator.frequency.setValueAtTime(
+                783.99,
+                audioContext.currentTime + 0.2
+              ); // G5
+              oscillator.start();
+              oscillator.stop(audioContext.currentTime + 0.5);
+              break;
+            case "victory":
+              oscillator.type = "sine";
+              oscillator.frequency.setValueAtTime(
+                523.25,
+                audioContext.currentTime
+              ); // C5
+              gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+              oscillator.frequency.setValueAtTime(
+                659.25,
+                audioContext.currentTime + 0.3
+              ); // E5
+              oscillator.frequency.setValueAtTime(
+                783.99,
+                audioContext.currentTime + 0.6
+              ); // G5
+              oscillator.frequency.setValueAtTime(
+                1046.5,
+                audioContext.currentTime + 0.9
+              ); // C6
+              oscillator.start();
+              oscillator.stop(audioContext.currentTime + 1.2);
+              break;
+          }
+        } catch (error) {
+          console.log("音效播放失敗:", error);
+        }
+      }
+
+      // 打亂陣列順序
+      function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [array[i], array[j]] = [array[j], array[i]];
+        }
+      }
+
+      // 事件監聽
+      elements.startButton.addEventListener("click", () => {
+        elements.startScreen.classList.add("hidden");
+        elements.gameScreen.classList.remove("hidden");
+        initGame();
+      });
+
+      elements.pauseButton.addEventListener("click", pauseGame);
+      elements.resumeButton.addEventListener("click", resumeGame);
+      elements.restartButton.addEventListener("click", restartGame);
+      elements.quitButton.addEventListener("click", backToMenu);
+      elements.nextLevelButton.addEventListener("click", nextLevel);
+      elements.playAgainButton.addEventListener("click", restartGame);
+      elements.backToMenuButton.addEventListener("click", backToMenu);
+      elements.soundToggle.addEventListener("click", toggleSound);
+
+      // 自動發音開關事件監聽
+      elements.autoPronunciationToggle.addEventListener(
+        "change",
+        toggleAutoPronunciation
+      );
+
+      // 發音按鈕點擊事件
+      elements.pronunciationButton.addEventListener("click", () => {
+        if (gameState.currentWord) {
+          speakWord(gameState.currentWord);
+        }
+      });
+
+      // 鍵盤快速鍵
+      document.addEventListener("keydown", (e) => {
+        if (!gameState.isPlaying) return;
+
+        // 空格鍵暫停/繼續
+        if (e.code === "Space") {
+          e.preventDefault();
+          if (gameState.isPaused) {
+            resumeGame();
+          } else {
+            pauseGame();
+          }
+        }
+
+        // R鍵重新開始
+        if (e.code === "KeyR") {
+          restartGame();
+        }
+
+        // ESC鍵返回選單
+        if (e.code === "Escape") {
+          backToMenu();
+        }
+
+        // S鍵播放發音
+        if (e.code === "KeyS" && !gameState.isPaused) {
+          e.preventDefault();
+          if (gameState.currentWord) {
+            speakWord(gameState.currentWord);
+          }
+        }
+      });
+
+      // 頁面載入時檢查語音合成支援
+      window.addEventListener("load", () => {
+        if (!checkSpeechSupport()) {
+          console.log("當前瀏覽器不支援語音合成API");
+          // 停用自動發音開關
+          elements.autoPronunciationToggle.checked = false;
+          elements.autoPronunciationToggle.disabled = true;
+        }
+      });
+    </script>
+  </body>
+</html>
